@@ -9,6 +9,7 @@ import { renderLoginPage, initLoginPage } from './pages/LoginPage.js';
 import { renderRegisterPage, initRegisterPage } from './pages/RegisterPage.js';
 import { renderDashboardPage, initDashboardPage } from './pages/DashboardPage.js';
 import { renderEditorPage, initEditorPage } from './pages/EditorPage.js';
+import { renderChatPage, initChatPage } from './pages/ChatPage.js';
 
 // Register routes
 router.register('/login', () => renderLoginPage(), {
@@ -29,6 +30,11 @@ router.register('/dashboard', () => renderDashboardPage(), {
 router.register('/editor', () => renderEditorPage(), {
   requiresAuth: true,
   onRender: () => initEditorPage()
+});
+
+router.register('/chat', () => renderChatPage(), {
+  requiresAuth: true,
+  onRender: () => initChatPage()
 });
 
 // Root route

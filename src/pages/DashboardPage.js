@@ -9,19 +9,20 @@ import { router } from '../router.js';
 // State
 let notes = [];
 let filters = {
-    category: 'all',
-    type: 'all',
-    search: ''
+  category: 'all',
+  type: 'all',
+  search: ''
 };
 let loading = true;
 
 export function renderDashboardPage() {
-    const user = getCurrentUser();
+  const user = getCurrentUser();
 
-    return `
+  return `
     <header class="header">
       <div class="header-logo">🧠 MindForge</div>
       <div class="header-actions">
+        <a href="#/chat" class="btn btn-secondary">🤖 Chat IA</a>
         <span class="user-email">${user?.email || ''}</span>
         <button class="btn btn-ghost" id="logout-btn">Sair</button>
       </div>
@@ -73,29 +74,29 @@ export function renderDashboardPage() {
 }
 
 function renderNotes() {
-    const container = document.getElementById('notes-container');
-    const countEl = document.getElementById('notes-count');
+  const container = document.getElementById('notes-container');
+  const countEl = document.getElementById('notes-count');
 
-    if (loading) {
-        container.innerHTML = `
+  if (loading) {
+    container.innerHTML = `
       <div class="flex items-center justify-center" style="padding: 4rem;">
         <div class="loader"></div>
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    countEl.textContent = `${notes.length} anotação${notes.length !== 1 ? 's' : ''}`;
+  countEl.textContent = `${notes.length} anotação${notes.length !== 1 ? 's' : ''}`;
 
-    if (notes.length === 0) {
-        container.innerHTML = `
+  if (notes.length === 0) {
+    container.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">📝</div>
         <h3 class="empty-title">Nenhuma anotação</h3>
         <p class="empty-text">
           ${filters.category !== 'all' || filters.type !== 'all' || filters.search
-                ? 'Nenhuma anotação encontrada com esses filtros.'
-                : 'Comece criando sua primeira anotação técnica.'}
+        ? 'Nenhuma anotação encontrada com esses filtros.'
+        : 'Comece criando sua primeira anotação técnica.'}
         </p>
         ${filters.category === 'all' && filters.type === 'all' && !filters.search ? `
           <button class="btn btn-primary" onclick="window.location.hash = '/editor'">
@@ -104,10 +105,10 @@ function renderNotes() {
         ` : ''}
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="notes-grid">
       ${notes.map(note => renderNoteCard(note)).join('')}
     </div>
@@ -115,11 +116,11 @@ function renderNotes() {
 }
 
 function renderNoteCard(note) {
-    const categoryClass = note.category.toLowerCase().replace(' ', '');
-    const typeClass = note.type.toLowerCase();
-    const dateStr = formatDate(note.createdAt);
+  const categoryClass = note.category.toLowerCase().replace(' ', '');
+  const typeClass = note.type.toLowerCase();
+  const dateStr = formatDate(note.createdAt);
 
-    return `
+  return `
     <article class="note-card" data-note-id="${note.id}">
       <div class="note-card-header">
         <h3 class="note-title">${escapeHtml(note.title)}</h3>
@@ -137,85 +138,85 @@ function renderNoteCard(note) {
 }
 
 function formatDate(date) {
-    if (!date) return '';
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short'
-    });
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short'
+  });
 }
 
 function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 async function loadNotes() {
-    const user = getCurrentUser();
-    if (!user) return;
+  const user = getCurrentUser();
+  if (!user) return;
 
-    loading = true;
-    renderNotes();
+  loading = true;
+  renderNotes();
 
-    try {
-        notes = await getNotes(user.uid, filters);
-    } catch (error) {
-        console.error('Error loading notes:', error);
-        notes = [];
-    }
+  try {
+    notes = await getNotes(user.uid, filters);
+  } catch (error) {
+    console.error('Error loading notes:', error);
+    notes = [];
+  }
 
-    loading = false;
-    renderNotes();
+  loading = false;
+  renderNotes();
 }
 
 export function initDashboardPage() {
-    // Load notes
+  // Load notes
+  loadNotes();
+
+  // Logout button
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  });
+
+  // New note button
+  document.getElementById('new-note-btn').addEventListener('click', () => {
+    router.navigate('/editor');
+  });
+
+  // Search with debounce
+  let searchTimeout;
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      filters.search = e.target.value;
+      loadNotes();
+    }, 300);
+  });
+
+  // Category filter
+  document.getElementById('category-filter').addEventListener('change', (e) => {
+    filters.category = e.target.value;
     loadNotes();
+  });
 
-    // Logout button
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    });
+  // Type filter
+  document.getElementById('type-filter').addEventListener('change', (e) => {
+    filters.type = e.target.value;
+    loadNotes();
+  });
 
-    // New note button
-    document.getElementById('new-note-btn').addEventListener('click', () => {
-        router.navigate('/editor');
-    });
-
-    // Search with debounce
-    let searchTimeout;
-    document.getElementById('search-input').addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            filters.search = e.target.value;
-            loadNotes();
-        }, 300);
-    });
-
-    // Category filter
-    document.getElementById('category-filter').addEventListener('change', (e) => {
-        filters.category = e.target.value;
-        loadNotes();
-    });
-
-    // Type filter
-    document.getElementById('type-filter').addEventListener('change', (e) => {
-        filters.type = e.target.value;
-        loadNotes();
-    });
-
-    // Click on note card
-    document.getElementById('notes-container').addEventListener('click', (e) => {
-        const card = e.target.closest('.note-card');
-        if (card) {
-            const noteId = card.dataset.noteId;
-            router.navigate(`/editor?id=${noteId}`);
-        }
-    });
+  // Click on note card
+  document.getElementById('notes-container').addEventListener('click', (e) => {
+    const card = e.target.closest('.note-card');
+    if (card) {
+      const noteId = card.dataset.noteId;
+      router.navigate(`/editor?id=${noteId}`);
+    }
+  });
 }
